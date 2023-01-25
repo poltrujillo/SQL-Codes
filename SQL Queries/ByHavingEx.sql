@@ -1,44 +1,52 @@
-/* Retorna un recompte de quants distribuidors (shippers) hi ha. */
+-- LINKED TO THE northwind.png DATABASE
+
+/* Return the count of the total existing shippers. */
 -- 1.
-SELECT COUNT(ShipperID) FROM Shippers;
 
-/* Calcula quants proveïdors (suppliers) hi ha per ciutat. */
+SELECT COUNT(*) FROM Shippers;
+
+/* Return how many suppliers exist in each city */
 -- 2.
-SELECT COUNT(SupplierID) FROM Suppliers GROUP BY City;
 
-/* Calcula quants productes són distribuits pel shipper número 3. */
+SELECT COUNT(*), City FROM Suppliers GROUP BY City;
+
+/* Return how many products are distributed by the shipper number 3 */
 -- 3.
-SELECT COUNT(ProductID) FROM Products WHERE ShipperID = 3;
+
+SELECT COUNT(ProductID) FROM Orders AS o, OrderDetails AS od
+    WHERE o.OrderID = od.OrderID AND ShipperVia = 3;
 
 /* Crea un informe amb el nom del distribuidor, nom del proveidor,
 nom de la categoria i el recompte de productes que coincideixen. */
 -- 4.
-SELECT sup.CompanyName, sh.CompanyName, c.CategoryName, COUNT(p.ProductID)
-    FROM  Suppliers AS sup,
+
+SELECT s.CompanyName, sh.CompanyName, c.CategoryName, COUNT(p.ProductID)
+    FROM  Suppliers AS s,
         Shippers AS sh,
-        Categories AS cat,
-        Products AS prod,
+        Categories AS c,
+        Products AS p,
         OrderDetails AS od,
-        Orders AS ord
-    WHERE sup.SupplierID = prod.SupplierID
-        AND cat.CategoryID = prod.CategoryID
-        AND prod.ProductID = od.ProductID
-        AND od.OrderID = ord.OrderID
-        AND ord.ShipVia = sh.ShipperID
-    GROUP BY sup.CompanyName, sh.CompanyName, cat.CategoryName;
+        Orders AS o
+    WHERE s.SupplierID = p.SupplierID
+        AND c.CategoryID = p.CategoryID
+        AND p.ProductID = od.ProductID
+        AND od.OrderID = o.OrderID
+        AND o.ShipperVia = sh.ShipperID
+    GROUP BY s.CompanyName, sh.CompanyName, c.CategoryName;
 
 /* Mostra un informe amb el nom dels clients (customers.companyname)
 que han rebut més de tres paquets provinents del shipper número 3. */
 -- 5.
-SELECT c.CompanyName 
-    FROM customers AS c, shippers AS s, orders AS o 
-    WHERE ShipperID = 3 
-    AND (SELECT COUNT(o.OrderID) FROM orders AS o, customers AS c, shippers AS s WHERE shipvia = 3) > 3 
-    GROUP BY c.CompanyName;
 
+SELECT c.CompanyName 
+    FROM customers AS c, Shippers AS sh, Orders AS o 
+        WHERE c.CustomerID = o.CustomerID AND ShipperVia = 3 
+        GROUP BY c.CustomerID HAVING COUNT(o.OrderID) > 3;
+    
 /* Mostra un recompte de les ordres que ha rebut cada customer
 ordenant pel recompte de forma descendent. */
 -- 6.
+
 SELECT c.CompanyName, COUNT(o.OrderID)
     FROM Orders AS o,
         Customers AS c
@@ -48,35 +56,40 @@ SELECT c.CompanyName, COUNT(o.OrderID)
 /* Mostra un recompte de clients (customers) per codi postal sempre i quant
 n'hi hagi més d'un al mateix codi postal. */
 -- 7.
+
 SELECT PostalCode, COUNT(CustomerID) FROM customers
     GROUP BY PostalCode
     HAVING COUNT(CustomerID) > 1;    
 
 /* Compta quants territoris diferents hi ha per cada regió. Mostra RegionDescription i el recompte. */
 -- 8.
+
 SELECT r.RegionDescription, COUNT(t.TerritoryID)
-    FROM Territories AS terr,
-        Region AS reg
-    WHERE terr.RegionID = r.RegionID
-    GROUP BY reg.RegionID;
+    FROM Territories AS t,
+         Region AS r
+    WHERE t.RegionID = r.RegionID
+    GROUP BY r.RegionID;
 
 /* Calcula la mitjana de comandes (orders) servides per cada shipper. */
 -- 9.
-SELECT ShipVia, COUNT(OrderID) FROM Orders
-    GROUP BY ShipVia;
+
+SELECT ShipperVia, COUNT(OrderID) FROM Orders
+    GROUP BY ShipperVia;
 
 /* Compta quants empleats hi ha per cada territori. Mostra TerritoryDescription i el recompte. */
 -- 10.
+
 SELECT t.TerritoryDescription, COUNT(e.EmployeeID)
-    FROM Employees AS emp,
-        Territories AS terr,
+    FROM Employees AS e,
+        Territories AS t,
         EmployeeTerritories AS et
-    WHERE emp.EmployeeID = et.EmployeeID
-        AND terr.TerritoryID = et.TerritoryID
-    GROUP BY terr.TerritoryID;
+    WHERE e.EmployeeID = et.EmployeeID
+        AND t.TerritoryID = et.TerritoryID
+    GROUP BY t.TerritoryID;
 
 /* Compta quants empleats hi ha per cada regió. Mostra RegionDescription i el recompte. */
 -- 11.
+
 SELECT r.RegionDescription, COUNT(e.EmployeeID)
     FROM Employees AS e,
         Territories AS t,
@@ -89,6 +102,7 @@ SELECT r.RegionDescription, COUNT(e.EmployeeID)
 
 /* Retorna només el nom de la regió (region.description) que té més empleats. */
 -- 12.
+
 SELECT r.regiondescription 
     FROM Region r, 
         Territories t, 
@@ -103,6 +117,7 @@ SELECT r.regiondescription
 
 /* Retorna el recompte de productes per categoria. */
 -- 13.
+
 SELECT c.CategoryName, COUNT(p.ProductID)
     FROM Products AS p,
         Categories AS c
@@ -122,6 +137,7 @@ SELECT s.CompanyName, COUNT(p.ProductID)
 
 /* Calcula quants empleats hi ha per Ciutat contractats a partir de l'any 1993. */
 -- 15.
+
 SELECT City, COUNT(EmployeeID) FROM Employees
     GROUP BY City
     ORDER BY City ASC;
